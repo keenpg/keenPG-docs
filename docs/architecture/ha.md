@@ -50,12 +50,10 @@ flowchart TB
 | **Primary service** | A stable address that always points at the current primary, so applications don't need to know which pod it is. |
 | **Backup storage** | Object or volume storage holding base backups and archived write-ahead logs. |
 
-`<Add or remove rows to match keenPGO: connection pooler, monitoring sidecar, etc.>`
 
 ### Design principle: the operator is not a single point of failure
 
-Once a cluster is running, `<describe how failover is coordinated, for
-example by agents inside the database pods>`. If the operator is down:
+Once a cluster is running, patroni is responsible for failover. If the operator is down:
 
 - Running clusters keep serving traffic
 - Failover still happens
@@ -69,7 +67,6 @@ example by agents inside the database pods>`. If the operator is down:
 | Node hosting the primary fails | A replica on another node is promoted |
 | A replica fails | The cluster keeps running and the replica is rebuilt |
 | Operator unavailable | Existing clusters keep running, as described above |
-| Zone outage | Survives only if instances are spread across zones |
 | Planned maintenance | Handled one instance at a time, see [Maintenance without downtime](#maintenance-without-downtime) |
 
 !!! note "Limits of high availability"
@@ -118,57 +115,39 @@ Typical failover time: `<value, and the conditions under which you measured it>`
 | Environment | Instances | Placement | Replication |
 |---|---|---|---|
 | Development | 1 | Any | Not applicable |
-| Standard production | 3 | Separate nodes | Asynchronous |
-| Critical production | 3 or more | Separate nodes and separate zones | Synchronous |
+| Production | 3 | Separate nodes | Asynchronous |
 
 Set the number of instances in the cluster resource:
 
 ```yaml
 spec:
-  # <instances / replicas setting>
+  instances:
+    - name: instance1
+      replicas: 3
+      minAvailable: 1
+  proxy:
+    pgBouncer:
+      replicas: 3
+      minAvailable: 1
 ```
 
-## Spread instances across your infrastructure
-
-Instances that share a node, or a zone, also share its failures. Kubernetes
-offers several controls for keeping them apart.
 
 ### Pod anti-affinity
 
-Anti-affinity tells Kubernetes not to put instances of the same cluster
-together.
+Anti-affinity tells Kubernetes not to put all instances of the same cluster
+together. Which means we highly recommend to use different node for each instance of same cluster.
 
-| Mode | Behaviour | Trade-off |
-|---|---|---|
-| Soft (preferred) | Kubernetes tries to use different nodes but may share one | The cluster always starts, with less protection when nodes are scarce |
-| Hard (required) | Instances must be on different nodes | Strongest protection, but an instance stays pending if there aren't enough nodes |
 
-Use hard rules in production when you have spare nodes, and soft rules on
-small or test clusters.
 
-```yaml
-spec:
-  # <anti-affinity setting>
-```
 
-### Topology spread constraints
-
-Spread constraints distribute instances evenly across failure domains such
-as zones, racks or nodes, so that no single domain holds most of your
-replicas.
-
-```yaml
-spec:
-  # <topology spread setting>
-```
 
 ### Node affinity
 
 Node affinity places instances on nodes with particular labels. Typical uses:
 
 - Fast local storage or high-memory nodes for the primary
-- Keeping a replica in a specific region for locality
-- Isolating databases from other workloads
+- Keeping a replica in a specific nodesets
+- Isolating databases from other workloads which means dedicated nodes for DB instance in production.
 
 ```yaml
 spec:
@@ -177,34 +156,14 @@ spec:
 
 ### Tolerations
 
-Tolerations let instances run on nodes that carry a taint. This is how you
-reserve dedicated nodes for databases while keeping other workloads off them.
+Kubernetes Tolerations can help with the scheduling of Pods to appropriate nodes. There are many reasons that a Kubernetes administrator may want to use tolerations, such as restricting the types of Pods that can be assigned to particular Nodes. Reasoning and strategy for using taints and tolerations is outside the scope of this documentation. 
 
 ```yaml
 spec:
   # <tolerations setting>
 ```
 
-## Replication and data safety
 
-PostgreSQL replicas can copy changes in two ways, and the choice decides how
-much data you could lose in a failover.
-
-| | Asynchronous (default) | Synchronous |
-|---|---|---|
-| Write confirmed when | The primary has it | The primary and at least one replica have it |
-| Write latency | Lowest | Higher |
-| Data loss on failover | Latest transactions may be lost | Confirmed transactions are kept |
-| If the synchronous replica is unavailable | Writes continue | Writes can pause until another replica takes over |
-
-Choose synchronous replication when losing even one committed transaction
-is unacceptable. Accept the extra latency, and run enough replicas that one
-failure doesn't stall writes.
-
-```yaml
-spec:
-  # <synchronous replication setting>
-```
 
 ## Maintenance without downtime
 
@@ -276,7 +235,7 @@ If something doesn't behave as expected, see [troubleshooting](../troubleshootin
 ## Production checklist
 
 - [ ] At least three instances
-- [ ] Instances on separate nodes, ideally in separate zones
+- [ ] Instances on separate nodes, ideally in separate nodes
 - [ ] Synchronous replication where data loss is unacceptable
 - [ ] A pod disruption budget below your instance count
 - [ ] Applications and connection pools retry after connection loss
@@ -284,8 +243,4 @@ If something doesn't behave as expected, see [troubleshooting](../troubleshootin
 - [ ] [Backups](../backups.md) configured and a restore tested
 - [ ] [Monitoring](monitoring.md) alerts on replica lag and failovers
 
-## Related pages
 
-- [Backup and restore](backupandrestore.md)
-- [Disaster recovery](dr.md)
-- [Monitoring](monitoring.md)
