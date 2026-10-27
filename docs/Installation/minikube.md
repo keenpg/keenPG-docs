@@ -1,7 +1,7 @@
-# Install Percona Distribution for PostgreSQL on Minikube
+# Install keenPGO for PostgreSQL on Minikube
 
-Installing the Percona Operator for PostgreSQL on [Minikube :octicons-link-external-16:](https://github.com/kubernetes/minikube)
-is the easiest way to try it locally without a cloud provider. 
+Installing the keenPGO on [Minikube :octicons-link-external-16:](https://github.com/kubernetes/minikube)
+is the easiest way to try it for dev environment and learning purpose. 
 
 Minikube runs
 Kubernetes on GNU/Linux, Windows, or macOS system using a system-wide
@@ -28,6 +28,11 @@ for PostgreSQL on Minikube.
     ```bash
     minikube start --memory=5120 --cpus=4 --disk-size=30g
     ```
+    ```bash
+    Minikube with Driver docker
+    minikube start --memory=5120 --cpus=4 --disk-size=30g --driver docker
+    ```
+    
 
     This command downloads needed virtualized images, then initializes and runs the
     cluster.
@@ -37,26 +42,26 @@ for PostgreSQL on Minikube.
     Executing `minikube dashboard` starts the dashboard and opens it in your
     default web browser.
 
-## Deploy the Percona Operator for PostgreSQL {.power-number}
+## Deploy the keenPGO {.power-number}
 
-1. Create the Kubernetes namespace for your cluster. It is a good practice to isolate workloads in Kubernetes by installing the Operator in a custom namespace. For example, let's name it `postgres-operator`:
+1. Create the Kubernetes namespace for your cluster. It is a good practice to isolate workloads in Kubernetes by installing the Operator in a custom namespace. For example, let's name it `keenpgo-operator`:
 
     ```bash
-    kubectl create namespace postgres-operator
+    kubectl create namespace keenpgo-operator
     ```
 
     ??? example "Expected output"
 
         ``` {.text .no-copy}
-        namespace/postgres-operator was created
+        namespace/keenpgo-operator was created
         ```
 
     We will use this namespace further on in this document. If you used another name, make sure to replace it in the following commands.
 
-2. Deploy the Operator [using :octicons-link-external-16:](https://kubernetes.io/docs/reference/using-api/server-side-apply/) the following command:
+2. Deploy the Operator using the following command:
 
     ```bash
-    kubectl apply --server-side -f https://raw.githubusercontent.com/keenpgo/keenpgo-postgresql-operator/v{{ release }}/deploy/bundle.yaml -n postgres-operator
+    kubectl apply --server-side -f https://raw.githubusercontent.com/keenpgo/keenpgo-postgresql-operator/v{{ release }}/deploy/bundle.yaml -n keenpgo-operator
     ```
 
     ??? example "Expected output"
@@ -65,76 +70,33 @@ for PostgreSQL on Minikube.
 
     As the result you have the Operator Pod up and running.
 
-3. Deploy Percona Distribution for PostgreSQL:
+3. Deploy keenPGO for PostgreSQL:
 
     ```bash
-    kubectl apply -f https://raw.githubusercontent.com/keenpgo/keenpgo-postgresql-operator/v{{ release }}/deploy/cr.yaml -n postgres-operator
+    kubectl apply -f https://raw.githubusercontent.com/keenpgo/keenpgo-postgresql-operator/v{{ release }}/deploy/cr.yaml -n keenpgo-operator
     ```
 
     ??? example "Expected output"
 
         ```{.text .no-copy}
-        keenpgopgcluster.pgv2.keenpgo.com/cluster1 created
+        keenpgpgcluster.pgv2.keenpgo.com/cluster1 created
         ```
 
-    !!! note 
 
-        This deploys the default Percona Distribution for PostgreSQL configuration.
-        Please see [deploy/cr.yaml :octicons-link-external-16:](https://raw.githubusercontent.com/keenpgo/keenpgo-postgresql-operator/v{{ release }}/deploy/cr.yaml)
-        and [Custom Resource Options](operator.md) for the configuration
-        options. You can clone the repository with all manifests and source code
-        by executing the following command:
 
-        ```bash
-        git clone -b v{{ release }} https://github.com/keenpgo/keenpgo-postgresql-operator
-        ```
-
-        After editing the needed options, apply your modified `deploy/cr.yaml`
-        file as follows:
-
-        ```bash
-        kubectl apply -f deploy/cr.yaml  -n postgres-operator
-        ```
-
-4. The creation process may take some time. When the process is over your
+4. The DB cluster creation process may take some time. When the process is over your
     cluster will obtain the `ready` status. You can check it with the following
     command:
    
     ```bash
-    kubectl get pg -n postgres-operator
+    kubectl get keenpgcluster -n keenpgo-operator
     ```
     
     ??? example "Expected output"
    
         --8<-- "kubectl-get-pg-response.txt"
 
-## Verify the Percona Distribution for PostgreSQL cluster operation
 
-When creation process is over, the output of the `kubectl get pg` command shows the cluster status as `ready`. You can try to connect to the cluster.
 
-{% include 'assets/fragments/connectivity.txt' %}
 
-## Delete the cluster
-
-If you need to delete the Operator and PostgreSQL cluster (for example, to clean
-up the testing deployment before adopting it for production use), check
-[this HowTo](delete.md).
-
-If you no longer need the Kubernetes cluster in Minikube, the following are the
-steps to remove it. 
-{.power-number}
-
-1. Stop the Minikube cluster:
-
-    ```
-    minikube stop
-    ```
-
-2. Delete the cluster 
-
-    ```
-    minikube delete
-    ```
-
-    This command deletes the virtual machines, and removes all associated files.
 
