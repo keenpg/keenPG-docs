@@ -1,55 +1,22 @@
-# keenPG Operator for PostgreSQL documentation
+# keenPGO documentation
 
-The [keenPG Operator for PostgreSQL :octicons-link-external-16:](https://github.com/percona/percona-postgresql-operator) 
-automates the creation, modification, or deletion of items in your keenPG
-Distribution for PostgreSQL environment. The Operator contains the necessary
-Kubernetes settings to maintain a consistent PostgreSQL cluster.
+keenPGO is the keenPG operator for Kubernetes. It runs PostgreSQL clusters
+for you: creating them, scaling them, healing them after failures, and
+taking care of backups, so your team can focus on applications instead of
+database upkeep.
 
-keenPG Kubernetes Operator is based on best practices for configuration and
-setup of a keenPG Distribution for PostgreSQL cluster. The benefits of the
-Operator are many, but saving time and delivering a consistent and vetted
-environment is key.
+With keenPGO you describe the cluster you want, and the operator makes it
+happen and keeps it that way. Every cluster is built the same way, which
+means fewer surprises between development, staging and production.
 
 !!! note ""
 
-    This is the documentation for the latest release, **{{release}}** ([Release Notes](ReleaseNotes/Kubernetes-Operator-for-PostgreSQL-RN{{release}}.md)).
+    You are reading the documentation for keenPGO version **<version>**.
+    See the [release notes](release-notes/index.md) for what has changed.
 
-    Explore planned features on the [public roadmap :octicons-link-external-16:](https://github.com/orgs/percona/projects/10/views/6). 
-    Check upcoming releases on the [release timeline :octicons-link-external-16:](https://github.com/orgs/percona/projects/10/views/9).
 
-Starting with keenPG Kubernetes Operator is easy. Follow our documentation guides, and you'll be set up in a minute.
 
-<div data-grid markdown><div data-banner markdown>
+## Need help?
 
-## :material-progress-download: Installation guides { .title }
-
-Want to see it for yourself? Get started quickly with our step-by-step installation instructions.
-
-[Quickstart guides :material-arrow-right:](quickstart.md){ .md-button }
-
-</div><div data-banner markdown>
-
-## :material-security: Security and encryption { .title }
-
-Rest assured! Learn more about our security features designed to protect your valuable data.
-
-[Security measures :material-arrow-right:](TLS.md){ .md-button }
-</div><div data-banner markdown>
-
-### :material-backup-restore: Backup management { .title }
-
-Learn what you can do to maintain regular backups of your PostgreSQL cluster.
-
-[Backup management :material-arrow-right:](backups.md){ .md-button }
-
-</div><div data-banner markdown>
-
-### :material-frequently-asked-questions: Troubleshooting { .title }
-
-Our comprehensive resources will help you overcome challenges, from everyday issues to specific doubts.
-
-[Diagnostics :material-arrow-right:](debug.md){.md-button}
-
-</div>
-</div>
-
+Questions about keenPGO, or want hands-on support from our engineers?
+Visit [keenpg.in](https://keenpg.in/) or [book a demo](https://keenpg.in/contact?intent=expert).

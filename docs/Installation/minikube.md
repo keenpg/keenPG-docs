@@ -1,6 +1,7 @@
-# Installation of KeenPGO Operator for PostgreSQL on Minikube
+# Install Percona Distribution for PostgreSQL on Minikube
 
-In this section we will be installing the KeenPGO operator on [Minikube :octicons-link-external-16:](https://github.com/kubernetes/minikube) on local. 
+Installing the Percona Operator for PostgreSQL on [Minikube :octicons-link-external-16:](https://github.com/kubernetes/minikube)
+is the easiest way to try it locally without a cloud provider. 
 
 Minikube runs
 Kubernetes on GNU/Linux, Windows, or macOS system using a system-wide
@@ -8,7 +9,8 @@ hypervisor, such as VirtualBox, KVM/QEMU, VMware Fusion or Hyper-V. Using it is
 a popular way to test Kubernetes application locally prior to deploying it on a
 cloud.
 
-This document describes how to deploy the Operator and KeenPGO on Minikube.
+This document describes how to deploy the Operator and Percona Distribution
+for PostgreSQL on Minikube.
 
 ## Set up Minikube {.power-number}
 
@@ -24,7 +26,7 @@ This document describes how to deploy the Operator and KeenPGO on Minikube.
 2. After the installation, initialize and start the Kubernetes cluster. The parameters we pass for the following command increase the virtual machine limits for the CPU cores, memory, and disk, to ensure stable work of the Operator:
 
     ```bash
-    minikube start --memory=5120 --cpus=4 --disk-size=30g 
+    minikube start --memory=5120 --cpus=4 --disk-size=30g
     ```
 
     This command downloads needed virtualized images, then initializes and runs the
@@ -35,18 +37,18 @@ This document describes how to deploy the Operator and KeenPGO on Minikube.
     Executing `minikube dashboard` starts the dashboard and opens it in your
     default web browser.
 
-## Deploy the KeenPGO  {.power-number}
+## Deploy the Percona Operator for PostgreSQL {.power-number}
 
-1. Create the Kubernetes namespace for your cluster. It is a good practice to isolate workloads in Kubernetes by installing the Operator in a custom namespace. For example, let's name it `keenpg-operator`:
+1. Create the Kubernetes namespace for your cluster. It is a good practice to isolate workloads in Kubernetes by installing the Operator in a custom namespace. For example, let's name it `postgres-operator`:
 
     ```bash
-    kubectl create namespace keenpg-operator
+    kubectl create namespace postgres-operator
     ```
 
     ??? example "Expected output"
 
         ``` {.text .no-copy}
-        namespace/keenpg-operator was created
+        namespace/postgres-operator was created
         ```
 
     We will use this namespace further on in this document. If you used another name, make sure to replace it in the following commands.
@@ -54,7 +56,7 @@ This document describes how to deploy the Operator and KeenPGO on Minikube.
 2. Deploy the Operator [using :octicons-link-external-16:](https://kubernetes.io/docs/reference/using-api/server-side-apply/) the following command:
 
     ```bash
-    kubectl apply --server-side -f https://raw.githubusercontent.com/percona/percona-postgresql-operator/v{{ release }}/deploy/bundle.yaml -n keenpg-operator
+    kubectl apply --server-side -f https://raw.githubusercontent.com/keenpgo/keenpgo-postgresql-operator/v{{ release }}/deploy/bundle.yaml -n postgres-operator
     ```
 
     ??? example "Expected output"
@@ -66,25 +68,25 @@ This document describes how to deploy the Operator and KeenPGO on Minikube.
 3. Deploy Percona Distribution for PostgreSQL:
 
     ```bash
-    kubectl apply -f https://raw.githubusercontent.com/percona/percona-postgresql-operator/v{{ release }}/deploy/cr.yaml -n postgres-operator
+    kubectl apply -f https://raw.githubusercontent.com/keenpgo/keenpgo-postgresql-operator/v{{ release }}/deploy/cr.yaml -n postgres-operator
     ```
 
     ??? example "Expected output"
 
         ```{.text .no-copy}
-        perconapgcluster.pgv2.percona.com/cluster1 created
+        keenpgopgcluster.pgv2.keenpgo.com/cluster1 created
         ```
 
     !!! note 
 
         This deploys the default Percona Distribution for PostgreSQL configuration.
-        Please see [deploy/cr.yaml :octicons-link-external-16:](https://raw.githubusercontent.com/percona/percona-postgresql-operator/v{{ release }}/deploy/cr.yaml)
+        Please see [deploy/cr.yaml :octicons-link-external-16:](https://raw.githubusercontent.com/keenpgo/keenpgo-postgresql-operator/v{{ release }}/deploy/cr.yaml)
         and [Custom Resource Options](operator.md) for the configuration
         options. You can clone the repository with all manifests and source code
         by executing the following command:
 
         ```bash
-        git clone -b v{{ release }} https://github.com/percona/percona-postgresql-operator
+        git clone -b v{{ release }} https://github.com/keenpgo/keenpgo-postgresql-operator
         ```
 
         After editing the needed options, apply your modified `deploy/cr.yaml`
