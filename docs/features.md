@@ -11,7 +11,7 @@ always on. You describe the database you want. keenPGO builds it, watches it,
 repairs it and keeps it that way.Provide a User Interface console with operator.
 
 [Get started :material-arrow-right:](quickstart.md){ .md-button .md-button--primary }
-[Installation guides](installation/index.md){ .md-button }
+[Installation guides](Installation/index.md){ .md-button }
 
 ---
 
@@ -247,7 +247,7 @@ Everything you can do by hand, keenPGO can also do on its own.
 | Management | Operator and cluster definitions | Automated cluster setup |
 | Documentation | You are here | `<Link when available>` |
 
-[Install on your platform :material-arrow-right:](installation/index.md){ .md-button }
+[Install on your platform :material-arrow-right:](Installation/index.md){ .md-button }
 
 ---
 
@@ -289,16 +289,12 @@ Ask our team about a migration plan for your database.
     Every PostgreSQL version receives three additional years of patches, so
     you upgrade on your schedule.
 
--   :material-account-tie: **A named engineer**
+-   :material-account-tie: **A named Technical Account Manager and Engineer**
 
     ---
 
-    Early-access customers get one engineer who knows their setup.
--   :material-account-tie: **A named Technical Account Manager**
+    Early-access customers get a Technical Account Manager for smooth support and relation with the customers also one engineer who knows their setup.
 
-    ---
-
-    Early-access customers get one Technical Account Manager for smooth support and relation with the customers.    
 
 </div>
 
