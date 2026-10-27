@@ -55,12 +55,27 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Quickstart: quickstart.md
+  - Features: features.md
+  - Architecture:
+       - "HA architecture": architecture/ha.md
+       - "Backup and Restore": architecture/backupandrestore.md
+       - "DR detailed architecture": architecture/dr.md
+       - "Monitoring stack": architecture/monitoring.md
+       - "Console": architecture/console.md
   - Installation:
        - Installation/index.md
        - "Installation on Minikube": Installation/minikube.md
        - "Installation on Kubernetes": Installation/kubernetes.md
        - "Installation on OpenShift": Installation/openshift.md
        - "Installation via Helm charts": Installation/helm.md    
+       - "Installation in Disconnected Environment": Installation/disconnected.md
+  - Guide to Console: console.md
+  - DB Cluster:
+      - "Detail DB Instance": db/detail.md
+      - "Postgres Parameter": db/parameter.md
+      - "User Management": db/user.md
+      - "pg_hba Management": db/pghba.md
   - Backup and restore: backups.md
   - Security: security.md
+  - Support: support.md
   - Troubleshooting: troubleshooting.md
