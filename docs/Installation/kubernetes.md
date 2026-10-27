@@ -119,6 +119,8 @@ spec:
     ```bash
     kubectl get keenpg 
     ```
+
+    
 ## Production ready Sample DB yaml for PROD workload.
 
 Please find the sample production DB cluster yaml which is being by our customer for big database size and high workload .
