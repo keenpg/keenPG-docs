@@ -32,6 +32,8 @@ theme:
     - content.action.edit
 
 extra_css:
+  - https://unicons.iconscout.com/release/v3.0.3/css/line.css
+  - https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css
   - stylesheets/extra.css
   - stylesheets/rating.css
 plugins:
