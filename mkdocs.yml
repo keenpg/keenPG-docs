@@ -1,6 +1,6 @@
 site_name: keenPGO Documentation
 site_description: Keen for Postgres
-site_url: https://keenpg.github.io/keenPG-docs/
+site_url: https://keenpgodocs.keenpg.in/
 repo_url: https://github.com/keenpg/keenPG-docs
 repo_name: keenpg/keenPG-docs
 edit_uri: edit/main/docs/
