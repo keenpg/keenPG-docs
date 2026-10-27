@@ -1,0 +1,11 @@
+/* Header logo */
+.md-header__button.md-logo {
+  padding: 0.2rem;
+  margin: 0;
+}
+
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 2.2rem;   /* increase or decrease to taste */
+  width: auto;      /* keeps the proportions */
+}
