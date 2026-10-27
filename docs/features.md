@@ -4,11 +4,11 @@ hide:
   - toc
 ---
 
-# PostgreSQL that never sleeps
+# KeenPGO that never sleeps because we are keen for your Postgres
 
 keenPGO runs open-source PostgreSQL on Kubernetes and keeps it fast, safe and
 always on. You describe the database you want. keenPGO builds it, watches it,
-repairs it and keeps it that way.
+repairs it and keeps it that way.Provide a User Interface console with operator.
 
 [Get started :material-arrow-right:](quickstart.md){ .md-button .md-button--primary }
 [Installation guides](installation/index.md){ .md-button }
@@ -23,7 +23,7 @@ repairs it and keeps it that way.
 
     ---
 
-    No fork and no lock-in. Your data stays in standard PostgreSQL, and you
+    Your data stays in standard PostgreSQL, and you
     can leave at any time with `pg_dump`.
 
 -   :material-timer-sand: **Failover in seconds**
@@ -90,7 +90,7 @@ repairs it and keeps it that way.
 !!! success "Built to a standard"
     Every keenPGO cluster is built and run to these targets:
     **5 seconds or less** from a dead server to a new primary, with nobody
-    paged. `<Confirm targets match your tested results.>`
+    paged.
 
 ---
 
@@ -188,11 +188,11 @@ Launch, scale, fail over and rewind with whichever tool suits your team.
     keenpg create cluster orders --instances 3
     ```
 
-=== "API"
+=== "Console"
 
     ```bash
-    # <Replace with your real API call>
-    curl -X POST https://<host>/api/clusters -d '{"name": "orders"}'
+    Please visit the below Youtube video for walkthrough of keenpgo console
+    
     ```
 
 Everything you can do by hand, keenPGO can also do on its own.
@@ -203,11 +203,7 @@ Everything you can do by hand, keenPGO can also do on its own.
 
 <div class="grid cards" markdown>
 
--   :material-vector-polyline: **AI and vector search**
 
-    ---
-
-    Keep semantic search next to your data with pgvector.
 
 -   :material-map-marker-radius: **Geospatial**
 
@@ -239,8 +235,6 @@ Everything you can do by hand, keenPGO can also do on its own.
     - pgaudit
     - pg_cron
     - pgcrypto
-
-    `<Add the full list and supported versions.>`
 
 ---
 
@@ -300,6 +294,11 @@ Ask our team about a migration plan for your database.
     ---
 
     Early-access customers get one engineer who knows their setup.
+-   :material-account-tie: **A named Technical Account Manager**
+
+    ---
+
+    Early-access customers get one Technical Account Manager for smooth support and relation with the customers.    
 
 </div>
 
