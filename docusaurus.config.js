@@ -32,6 +32,13 @@ const config = {
           routeBasePath: '/',
           sidebarPath: './sidebars.js',
           editUrl: 'https://github.com/keenpg/keenPG-docs/tree/main/',
+          lastVersion: '6.0',
+          versions: {
+            '6.0': {
+              label: '6.0',
+              badge: true,
+            },
+          },
         },
         blog: false,
         theme: {
