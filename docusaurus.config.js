@@ -4,8 +4,8 @@ import {themes as prismThemes} from 'prism-react-renderer';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'keenPG Documentation',
- markdown: {
-    format: 'detect',
+  markdown: {
+     format: 'detect',
   },	
   tagline: 'Documentation for keenPG',
   favicon: 'img/favicon.ico',
@@ -13,7 +13,7 @@ const config = {
   url: 'https://keenpg.github.io',
   baseUrl: '/keenPG-docs/',
   organizationName: 'keenpg',
-  projectName: 'keenPG-docs',
+  projectName: 'keenPG docs for Operator',
   trailingSlash: false,
 
   onBrokenLinks: 'warn',

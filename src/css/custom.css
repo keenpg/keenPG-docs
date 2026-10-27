@@ -1,30 +1,42 @@
-/**
- * Any CSS included here will be global. The classic template
- * bundles Infima by default. Infima is a CSS framework designed to
- * work well for content-centric websites.
- */
+/* Fonts: replace with the real ones (Google Fonts example) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* You can override the default Infima variables here. */
 :root {
-  --ifm-color-primary: #2e8555;
-  --ifm-color-primary-dark: #29784c;
-  --ifm-color-primary-darker: #277148;
-  --ifm-color-primary-darkest: #205d3b;
-  --ifm-color-primary-light: #33925d;
-  --ifm-color-primary-lighter: #359962;
-  --ifm-color-primary-lightest: #3cad6e;
+  --ifm-font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --ifm-heading-font-family: var(--ifm-font-family-base);
+  --ifm-heading-font-weight: 700;
+
+  /* Brand (light mode) */
+  --ifm-color-primary: #PLACEHOLDER;
+  --ifm-color-primary-dark: #PLACEHOLDER;
+  --ifm-color-primary-darker: #PLACEHOLDER;
+  --ifm-color-primary-darkest: #PLACEHOLDER;
+  --ifm-color-primary-light: #PLACEHOLDER;
+  --ifm-color-primary-lighter: #PLACEHOLDER;
+  --ifm-color-primary-lightest: #PLACEHOLDER;
+
+  --ifm-background-color: #PLACEHOLDER;
+  --ifm-font-color-base: #PLACEHOLDER;
+  --ifm-navbar-background-color: var(--ifm-background-color);
   --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  --ifm-global-radius: 8px;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.08);
 }
 
-/* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
-  --ifm-color-primary: #25c2a0;
-  --ifm-color-primary-dark: #21af90;
-  --ifm-color-primary-darker: #1fa588;
-  --ifm-color-primary-darkest: #1a8870;
-  --ifm-color-primary-light: #29d5b0;
-  --ifm-color-primary-lighter: #32d8b4;
-  --ifm-color-primary-lightest: #4fddbf;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --ifm-color-primary: #PLACEHOLDER;
+  --ifm-color-primary-dark: #PLACEHOLDER;
+  --ifm-color-primary-darker: #PLACEHOLDER;
+  --ifm-color-primary-darkest: #PLACEHOLDER;
+  --ifm-color-primary-light: #PLACEHOLDER;
+  --ifm-color-primary-lighter: #PLACEHOLDER;
+  --ifm-color-primary-lightest: #PLACEHOLDER;
+
+  --ifm-background-color: #PLACEHOLDER;
+  --ifm-background-surface-color: #PLACEHOLDER;
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
 }
+
+.navbar { box-shadow: none; border-bottom: 1px solid var(--ifm-toc-border-color); }
+.navbar__logo { height: 2rem; }
+.footer--dark { background-color: #PLACEHOLDER; }
