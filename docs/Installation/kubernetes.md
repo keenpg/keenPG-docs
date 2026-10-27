@@ -157,10 +157,7 @@ spec:
 
 ## Verifying the cluster operation
 
-After the cluster status is `ready`, you can try to connect
-to the cluster.
-
-{% include 'assets/fragments/connectivity.txt' %}
+Documentation team is working on it.
 
 
 
