@@ -80,9 +80,6 @@ For production, use a CSI driver appropriate for your infrastructure, such as
     kubectl apply --server-side -f config/keenpg -n keenpg-operator
     ```
 
-    ??? example "Expected output"
-
-        --8<-- "kubectl-apply-bundle-response.txt"
 
     At this point, the Operator Pod is up and running.
 
@@ -92,11 +89,6 @@ For production, use a CSI driver appropriate for your infrastructure, such as
     kubectl apply -f example/database.yaml 
     ```
 
-    ??? example "Expected output"
-
-        ``` {.text .no-copy}
-        keenpgcluster/clusterdb created
-        ```
   
 
     ```bash
