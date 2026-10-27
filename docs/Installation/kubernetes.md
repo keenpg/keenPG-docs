@@ -84,6 +84,27 @@ For production, use a CSI driver appropriate for your infrastructure, such as
     At this point, the Operator Pod is up and running.
 
 3. Once the Operator has been started and console Pod and Console DB pods are up, and you can deploy DB instance via CLI or UI:
+   Sample DB Yaml.
+   ```bash
+   apiVersion: keenpg.io/v1beta1
+   kind: KeenPGCluster
+   metadata:
+    name: hippo
+  spec:
+    postgresVersion: 17
+    instances:
+      - dataVolumeClaimSpec:
+         accessModes: ["ReadWriteOnce"]
+         resources: { requests: { storage: 1Gi } }
+    backups:
+     pgbackrest:
+       repos:
+        - name: repo1
+          volume:
+            volumeClaimSpec:
+              accessModes: ["ReadWriteOnce"]
+              resources: { requests: { storage: 1Gi } }
+   ```
 
     ```bash
     kubectl apply -f example/database.yaml 
