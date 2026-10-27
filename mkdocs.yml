@@ -33,7 +33,7 @@ theme:
 
 extra_css:
   - stylesheets/extra.css
-
+  - stylesheets/rating.css
 plugins:
   - search
 
