@@ -100,6 +100,7 @@ DC cluster resource during normal operation:
 spec:
   standby:
     enabled: false
+        repoName: <repo that points at DC object storage>
 ```
 
 DR cluster resource during normal operation:
