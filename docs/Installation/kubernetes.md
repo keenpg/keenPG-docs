@@ -126,28 +126,238 @@ spec:
 Please find the sample production DB cluster yaml which is being by our customer for big database size and high workload .
 
 ```yaml
-apiVersion: keenpg.io/v1beta1
+apiVersion: keenpg.io/v1
 kind: KeenPGCluster
 metadata:
-  name: prodcluster
+  name: dc-prod
 spec:
-  postgresVersion: 17
+  postgresVersion: 16
+  image: registry.kubernetes.com:5000/rancher/postgres:ubi9-16.9-2520
+ 
+######## INSTANCE PG1#########
   instances:
-    - dataVolumeClaimSpec:
-        accessModes: ["ReadWriteOnce"]
+    - name: pg1
+      replicas: 1
+
+      resources:
+        limits:
+          hugepages-2Mi: 130872Mi
+          memory: 116Gi
+
+      dataVolumeClaimSpec:
+        storageClassName: vsphere-csi-storageclass
+        accessModes:
+        - "ReadWriteOnce"
         resources:
           requests:
-            storage: 1Gi
+            storage: 18000Gi
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  keenpgo.keeng.in/cluster: dc-prod
+                  keenpgo.keeng.in/instance-set: pg1
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/dbnode
+                    operator: In
+                    values:
+                      - dbnode                    
+######### INSTANCE PG2#########
+
+    - name: pg2
+      replicas: 1
+
+      resources:
+        limits:
+          hugepages-2Mi: 130872Mi
+          memory: 116Gi
+                      
+      dataVolumeClaimSpec:
+        storageClassName: vsphere-csi-storageclass
+        accessModes:
+        - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: 18000Gi
+                        
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  keenpgo.keeng.in/cluster: dc-prod
+                  keenpgo.keeng.in/instance-set: pg2
+                        
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/dbnode
+                    operator: In
+                    values:
+                      - dbnode
+
+
+  service:
+    type: LoadBalancer
+
+  replicaService:
+    type: ClusterIP
+
   backups:
     pgbackrest:
+      image: registry.kubernetes.com:5000/rancher/postgres:ubi9-2.54.2-2520
+      configuration:
+      - secret:
+          name: keenpgo-s3-creds
+      global:
+        repo1-path: /pgbackrest/keenpgo/dc-prod/repo2
+        repo1-retention-full: "7"
+        process-max: "32"
+        repo1-storage-verify-tls: "n"
+        repo1-retention-full-type: "time"
+        archive-get-queue-max: "100GiB"
+        archive-async: "y"
+        log-level-file: detail
+        log-level-console: detail
+        repo1-storage-port: "443"
+        repo1-s3-uri-style: "path"
+        spool-path: "/pgdata/pgbackrest/spool"
+        archive-missing-retry: "y"
       repos:
-        - name: repo1
-          volume:
-            volumeClaimSpec:
-              accessModes: ["ReadWriteOnce"]
-              resources:
-                requests:
-                  storage: 1Gi
+      - name: repo1
+        s3:
+          bucket: "bucketprod"
+          endpoint: "192.168.122.23"
+          region: "us-east-1"
+        schedules:
+          full: "30 10 * * 6"
+          incremental: "30 13 * * 0-5"
+
+  standby:
+    enabled: false
+    repoName: repo1
+
+  patroni:
+    dynamicConfiguration:
+      failsafe_mode: true
+      postgresql:
+        pg_hba:
+          - 'local    all         appadmin                trust'
+          - 'hostssl replication replicator all scram-sha-256'
+          - 'host     all         pgagent       0.0.0.0/0   trust'  
+          - 'host     all   keenpgo_monitoring   0.0.0.0/0   trust'
+          - 'host     all         all       0.0.0.0/0   md5'
+
+        parameters:
+          shared_preload_libraries: 'timescaledb,pg_cron'
+          autovacuum: 'on'
+          cron.host: '/tmp/postgres'
+          cron.database_name: 'postgres'
+          cron.timezone: 'Asia/Kolkata'
+          autovacuum_naptime: 10s
+          checkpoint_timeout: 15min
+          jit: off
+            #effective_cache_size: 96GB
+          log_destination: stderr
+          log_line_prefix: '%m [%p] %q%u@%d/%a %h'
+          log_min_duration_statement: -1
+          log_temp_files: 0
+          logging_collector: true
+          log_filename: 'postgresql-%Y-%m-%d.log'
+          log_rotation_age: 1440
+          log_rotation_size: 0
+          log_truncate_on_rotation: false
+            #maintenance_work_mem: 768MB
+          max_connections: 4000
+          max_replication_slots: 10
+          max_wal_size: 8GB
+          min_wal_size: 1GB
+          wal_keep_size: 500GB
+          shared_buffers: 80GB
+          huge_pages: try
+          effective_cache_size: 185GB
+          maintenance_work_mem: 8GB
+          max_worker_processes: 64
+          max_parallel_workers: 48
+          max_parallel_workers_per_gather: 4
+          work_mem: 16MB
+          temp_buffers: 16MB
+          effective_io_concurrency: 200
+          max_parallel_maintenance_workers: 4
+          autovacuum_work_mem: 2GB
+          checkpoint_completion_target: 0.9
+          wal_compression: lz4
+          autovacuum_max_workers: 5
+          autovacuum_vacuum_scale_factor: 0.02
+          autovacuum_vacuum_threshold: 1000
+          autovacuum_analyze_scale_factor: 0.01
+          autovacuum_analyze_threshold: 1000
+          autovacuum_vacuum_insert_scale_factor: 0.05
+          autovacuum_vacuum_insert_threshold: 5000
+          autovacuum_vacuum_cost_delay: 2ms
+          autovacuum_vacuum_cost_limit: 2000
+          log_autovacuum_min_duration: 1min
+          maintenance_io_concurrency: 100
+          track_io_timing: on
+          track_wal_io_timing: on
+          track_activity_query_size: 4096
+          pg_stat_statements.max: 10000
+          pg_stat_statements.track: top
+          pg_stat_statements.save: on
+            #pgaudit.log: read, write
+            #pgaudit.log_catalog: false
+            #pgaudit.log_client: false
+            #pgaudit.log_level: LOG
+            #pgaudit.log_parameter: true
+            #pgaudit.log_relation: true
+            #pgaudit.log_rows: false
+            #pgaudit.log_statement: true
+            #pgaudit.log_statement_once: true
+          random_page_cost: 1.1
+          timezone: Asia/Kolkata
+          port: "6657"
+          wal_buffers: 16MB            
+
+
+  monitoring:
+     pgmonitor:
+        exporter:
+            image: registry.kubernetes.com:5000/rancher/postgres-exporter:ubi9-0.17.1-2520
+  
+  port: 6657
+  proxy:
+    pgBouncer:
+      image: registry.kubernetes.com:5000/rancher/pgbouncer:ubi9-1.24-2520
+      replicas: 2
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  keenpgo.keeng.in/cluster: dc-prod
+                  keenpgo.keeng.in/role: pgbouncer
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node-role.kubernetes.io/dbnode
+                    operator: In
+                    values:
+                      - dbnode
 ```
 
 
