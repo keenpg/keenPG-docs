@@ -50,6 +50,31 @@ flowchart TB
     DRL -. backups when promoted .-> DRS
 ```
 
+### Why we need a standby cluster
+
+High availability inside one site (primary plus replica) protects against a
+pod or node failing. It does **not** protect against losing the whole site:
+a data centre outage, a network cut, a storage failure, or a Kubernetes
+cluster failure takes the primary and its replica down together.
+
+A standby cluster at the DR site covers that gap:
+
+| Reason | What the standby cluster gives you |
+|---|---|
+| **Survive loss of the whole DC** | A complete, separate copy of the database runs at another site, so the business can continue from DR. |
+| **Fast recovery** | The standby is already running and replaying WAL, so promoting it takes minutes. Restoring from backups alone could take hours for a large database. |
+| **Low data loss** | WAL is shipped continuously, so DR is only as far behind as the last archived WAL, not the last nightly backup. |
+| **Safe by design** | A standby cluster is read only. It can never accept writes by mistake while DC is active, so the two sites can't diverge. |
+| **Independent infrastructure** | DR has its own nodes, storage and object storage, so a problem at DC (including corrupted storage) doesn't spread to DR. |
+| **Planned maintenance** | You can move the workload to DR while DC is upgraded or repaired, then switch back. |
+| **Read-only use** | The standby can serve reports or read-only queries without loading the DC primary. |
+| **Tested recovery path** | Because DR is always running, you can verify it is healthy and rehearse switchovers instead of discovering problems during a real disaster. |
+
+!!! note "Standby cluster vs. backups"
+    A standby cluster does not replace backups. A mistake on DC (for example a
+    dropped table) is replayed on DR too. Backups in object storage let you
+    restore to a point in time before the mistake.
+
 ### Components
 
 | Component | Location | Role |
