@@ -19,6 +19,7 @@ PostgreSQL cluster and has its own object storage:
   (read / write) with a replica.
 - **DR** runs the same layout, but as a **standby cluster**. It is read only
   and continuously replays changes from the DC object storage.
+![DC / DR architecture](dc-dr-architecture.svg)  
 
 ```mermaid
 flowchart TB
