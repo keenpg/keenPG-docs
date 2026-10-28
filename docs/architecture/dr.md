@@ -235,7 +235,7 @@ kubectl patch keenpg-operator/primary-keenpgdb-instance -n primary-keenpgdb-dr \
 spec:
   standby:
     enabled: true
-    repoName: <repo that points at DC object storage>
+    repoName: <repo that points at DR object storage>
 ```
 
 ```bash
