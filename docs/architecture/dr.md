@@ -13,7 +13,7 @@ Then we bring it back from DR to DC with the same method.
 
 ## Initial setup
 
-![Initial setup](assets/01-initial-setup.svg)
+![Initial setup](../assets/01-initial-setup.svg)
 
 - One **keenPGO operator** is on top and manages everything.
 - DC and DR are two different Kubernetes clusters.
@@ -257,7 +257,7 @@ keenpgcluster.<api-group>/demo-dr-db-pod patched
 Now both main clusters are down. Nobody can write.
 Only the two standby clusters are running.
 
-![Switch to DR - main clusters shut down](assets/02-dc-to-dr-main-clusters-shut-down.svg)
+![Switch to DR - main clusters shut down](../assets/02-dc-to-dr-main-clusters-shut-down.svg)
 
 ### Step 5 - Promote DR main and start it
 
@@ -317,7 +317,7 @@ In psql, `SELECT pg_is_in_recovery();` should now say `f`.
 
 This is how it looks now:
 
-![DR active](assets/03-dr-active.svg)
+![DR active](../assets/03-dr-active.svg)
 
 - DR main cluster is primary and pushes WAL to DR object storage.
 - DR standby cluster recovers from DR object storage.
@@ -394,7 +394,7 @@ kubectl apply -k <dr-main-kustomize-path>
 Do not start the DC main cluster. It stays shut down.
 We come back on the DC standby cluster, because it was running the whole time and has the latest data.
 
-![Switch back to DC - DR main shut down](assets/04-dr-to-dc-dr-main-shut-down.svg)
+![Switch back to DC - DR main shut down](../assets/04-dr-to-dc-dr-main-shut-down.svg)
 
 Connect to the DC standby cluster:
 
@@ -482,7 +482,7 @@ kubectl patch keenpgcluster/demo-dr-db-pod -n demo-dr --type merge --patch '{"sp
 
 This is how it looks now:
 
-![DC standby active](assets/05-dc-standby-active.svg)
+![DC standby active](../assets/05-dc-standby-active.svg)
 
 - DC standby cluster is now the master. The application connects to it.
 - It pushes WAL to DC object storage.
