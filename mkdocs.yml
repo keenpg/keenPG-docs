@@ -73,7 +73,6 @@ nav:
        - "Backup and Restore": architecture/backupandrestore.md
        - "DR detailed architecture": architecture/dr.md
        - "Monitoring stack": architecture/monitoring.md
-       - "Console": console.md
   - Installation:
        - Installation/index.md
        - "Installation on Minikube": Installation/minikube.md
