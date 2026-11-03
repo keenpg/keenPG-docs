@@ -14,11 +14,16 @@ This chart is the Helm equivalent of the kustomize targets in `config/`:
 ## Install
 
 ```bash
-helm install keenpg ./keenpg-operator \
-  --namespace keenpg-operator --create-namespace
+git clone https://github.com/keenpg/keenpg-helm-charts.git
+
+cd keenpg-helm-charts/
+
+helm install keenpg . --namespace keenpg-operator --create-namespace
+
+
 ```
 
-With the web console:
+With the web console enabled:
 
 ```bash
 helm install keenpg ./keenpg-operator -n keenpg-operator --create-namespace \
