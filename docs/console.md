@@ -104,7 +104,7 @@ Why this matters:
 
 ## Sign in
 
-![Sign-in page](../assets/console-login.png)
+![Sign-in page](assets/console-login.png)
 
 1. Open the console address in your browser.
 2. Type your **username** and **password**, then click **Sign In**.
@@ -135,7 +135,7 @@ You see only the pages and buttons your role allows. See [Users and access](#use
 
 The Home page is your daily check: in one look you see whether everything is fine.
 
-![Home page](../assets/console-home.png)
+![Home page](assets/console-home.png)
 
 **Top card**
 
@@ -171,7 +171,7 @@ Lower on the page, **Recent activity** lists what happened lately (for example "
 
 Click **Create cluster** (top right). The form has 9 numbered steps. While you fill it, the **Summary** on the right shows what you will get.
 
-![Create cluster: project, name and version](../assets/console-create-cluster.png)
+![Create cluster: project, name and version](assets/console-create-cluster.png)
 
 **Step 1: Project and name**
 
@@ -186,7 +186,7 @@ Click **Create cluster** (top right). The form has 9 numbered steps. While you f
 - **PostGIS:** pick a version only if you store maps or locations.
 - **Custom image:** leave it empty. KeenPG then uses its own tested image.
 
-![Create cluster: pods, size and backups](../assets/console-create-cluster-size.png)
+![Create cluster: pods, size and backups](assets/console-create-cluster-size.png)
 
 **Step 3: Instances and resources**
 
@@ -237,7 +237,7 @@ The new cluster shows **deploying** and is usually ready in 2 to 5 minutes. The 
 
 Click **Clusters** in the menu to see every cluster in the current project.
 
-![Clusters list](../assets/console-clusters.png)
+![Clusters list](assets/console-clusters.png)
 
 | Column | Meaning |
 |---|---|
@@ -256,7 +256,7 @@ The list refreshes every 10 seconds. Use the icons above the table to search, fi
 
 Open a cluster to see everything about it. The header shows its health, environment, project, version and current primary. The page has 8 tabs.
 
-![Cluster overview](../assets/console-cluster-overview.png)
+![Cluster overview](assets/console-cluster-overview.png)
 
 ### The tabs
 
@@ -297,7 +297,7 @@ The panel under the members table runs safe Patroni commands for you. The answer
 
 Click **Actions** (top right of the cluster page).
 
-![Actions menu](../assets/console-cluster-actions.png)
+![Actions menu](assets/console-cluster-actions.png)
 
 | Action | What happens |
 |---|---|
@@ -315,7 +315,7 @@ Click **Actions** (top right of the cluster page).
 
 Open the cluster → **Users & databases** → **Connection** next to the user.
 
-![Connection details](../assets/console-connection.png)
+![Connection details](assets/console-connection.png)
 
 The window shows everything an application needs. Click the copy icon next to any value.
 
@@ -344,7 +344,7 @@ psql "postgresql://<user>:<password>@localhost:5432/<database>"
 
 Open **Backup & Restore** in the menu (or the cluster's **Backup & Restore** tab), and choose the cluster at the top right.
 
-![Backup and restore](../assets/console-backups.png)
+![Backup and restore](assets/console-backups.png)
 
 **What the page shows**
 
@@ -356,7 +356,7 @@ Open **Backup & Restore** in the menu (or the cluster's **Backup & Restore** tab
 
 **Restore in place:** replaces **all** data in this cluster with a backup.
 
-![Restore in place](../assets/console-restore.png)
+![Restore in place](assets/console-restore.png)
 
 1. Click **Restore in place…**.
 2. Choose the **Repository**.
@@ -376,7 +376,7 @@ Use a clone to:
 
 Run SQL on any database straight from your browser.
 
-![SQL editor](../assets/console-sql-editor.png)
+![SQL editor](assets/console-sql-editor.png)
 
 1. Choose the **Cluster** and the **Database** at the top.
 2. Type your SQL. The left panel lists schemas, tables and views; click one to use its name.
@@ -397,7 +397,7 @@ More:
 
 The **Database manager** lets you manage what is *inside* a cluster without writing SQL. Choose the **Cluster** and **Database** at the top right.
 
-![Database manager](../assets/console-databases.png)
+![Database manager](assets/console-databases.png)
 
 The cards show the number of databases, total size, roles, open sessions, and which user the page is connected as.
 
@@ -418,7 +418,7 @@ The cards show the number of databases, total size, roles, open sessions, and wh
 
 One page for the health of **all** your databases at once.
 
-![Observability](../assets/console-observability.png)
+![Observability](assets/console-observability.png)
 
 - **Top cards:**
   - how many clusters are healthy;
@@ -446,7 +446,7 @@ The **Kubernetes** tab shows the health of nodes and system pods.
 
 Discovery finds **other PostgreSQL databases** already running in your Kubernetes that KeenPG doesn't manage.
 
-![Discovery](../assets/console-discovery.png)
+![Discovery](assets/console-discovery.png)
 
 - **Top cards:** how many databases were found, and how many are healthy or need attention.
 - **PostgreSQL operators:** which other operators are installed: CloudNativePG, Crunchy PGO, Percona, Zalando, StackGres, KubeDB.
@@ -460,7 +460,7 @@ Discovery scans again every 30 seconds. **Crunchy PGO** and **Percona** database
 
 Move databases from **Crunchy PGO** or **Percona** into KeenPG. KeenPG reads the source's own backups, so **the source database is never changed or stopped**.
 
-![Migration](../assets/console-migration.png)
+![Migration](assets/console-migration.png)
 
 1. Open **Migration** and click **Migrate** on the cluster you want to move.
 2. **Source:** check the details (cluster, version, pod).
@@ -478,7 +478,7 @@ The new cluster has the same PostgreSQL major version as the source.
 
 **Settings → Users** lists everyone who can sign in to the console.
 
-![Users](../assets/console-users.png)
+![Users](assets/console-users.png)
 
 - **Add user:** create an account.
 - **Group:** decides what the person can do (table below).
