@@ -87,6 +87,7 @@ nav:
       - "User Management": db/user.md
       - "pg_hba Management": db/pghba.md
   - Backup and restore: backups.md
+  - Monitoring and Logging: monitoring.md  
   - Security: security.md
   - Support: support.md
   - Troubleshooting: troubleshooting.md
