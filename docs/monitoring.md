@@ -145,6 +145,8 @@ keenpg-operator     keenpgo-console-db       ClusterIP   10.102.194.163   <none>
 
 By default service of grafana will be of type ClusterIP. You can change it to Nodeport by below command.But we highly recommend to use LoadBalancer type of service or ingress/route for grafana.
 
+By default username and password of Grafana is admin/admin
+
 ```bash
 # kubectl -n keenpg-operator patch svc keenpg-grafana -p '{"spec":{"type":"NodePort"}}'
 ```
