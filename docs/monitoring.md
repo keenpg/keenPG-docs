@@ -178,6 +178,6 @@ By default username and password of Grafana is admin/admin
 
 ```
 
-Now you can import the dashboard provided in addon-monitoring folder.(./assets/grafana-top-query.png)
+Now you can import the dashboard provided in addon-monitoring folder.(../assets/grafana-top-query.png)
 
 
