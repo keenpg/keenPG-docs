@@ -57,8 +57,6 @@ featureGates: "OpenTelemetryMetrics=true,OpenTelemetryLogs=true"
 ## Step 2: Install Loki
 
 ```
-# git clone https://github.com/keenpg/keenpg-operator.git -b v6.0
-# cd keenpg-operator
 # kubectl apply -k config/logging
 ```
 
@@ -111,7 +109,7 @@ spec:
 Or patch a running cluster:
 
 ```
-# kubectl -n test patch keenpgcluster hippo-ha --type merge -p '{"spec":{"instrumentation":{
+# kubectl -n test patch keenpgcluster keenpg-ha --type merge -p '{"spec":{"instrumentation":{
     "config":{"exporters":{"otlphttp/loki":{"endpoint":"http://keenpg-loki.keenpg-operator.svc:3100/otlp"}}},
     "logs":{"exporters":["otlphttp/loki"],"retentionPeriod":"1d"}}}}'
 ```
@@ -121,10 +119,10 @@ You will see a `collector` sidecar in the PostgreSQL, pgBouncer and repo host po
 ```
 # kubectl get pods -n test
 NAME                                  READY   STATUS    RESTARTS   AGE
-hippo-ha-pgbouncer-658994757d-8jsww   3/3     Running   0          5m
-hippo-ha-pgha1-64kd-0                 5/5     Running   0          5m
-hippo-ha-pgha1-fqp6-0                 5/5     Running   0          5m
-hippo-ha-repo-host-0                  3/3     Running   0          5m
+keenpg-ha-pgbouncer-658994757d-8jsww   3/3     Running   0          5m
+keenpg-ha-pgha1-64kd-0                 5/5     Running   0          5m
+keenpg-ha-pgha1-fqp6-0                 5/5     Running   0          5m
+keenpg-ha-repo-host-0                  3/3     Running   0          5m
 ```
 
 ## Step 4 (optional): Choose what PostgreSQL logs
@@ -197,7 +195,7 @@ You can also search the logs yourself in **Explore**. Choose the **LOKI** data s
 ```
 {k8s_namespace_name="test"}                                   # all logs of a namespace
 {k8s_namespace_name="test"} |= "ERROR"                        # only lines with ERROR
-{k8s_pod_name=~"hippo-ha-pgha1-.*"} |= "duration:"            # slow queries of a cluster
+{k8s_pod_name=~"keenpg-ha-pgha1-.*"} |= "duration:"            # slow queries of a cluster
 {k8s_container_name="pgbouncer"}                              # pgBouncer logs
 ```
 
@@ -206,7 +204,7 @@ You can also search the logs yourself in **Explore**. Choose the **LOKI** data s
 Create an error in PostgreSQL:
 
 ```
-# kubectl -n test exec hippo-ha-pgha1-64kd-0 -c database -- psql -c "SELECT 1/0"
+# kubectl -n test exec keenpg-ha-pgha1-64kd-0 -c database -- psql -c "SELECT 1/0"
 ERROR:  division by zero
 ```
 
@@ -217,7 +215,7 @@ If you see no logs:
 - Check the collector of the pod:
 
   ```
-  # kubectl -n test logs hippo-ha-pgha1-64kd-0 -c collector --tail=20
+  # kubectl -n test logs keenpg-ha-pgha1-64kd-0 -c collector --tail=20
   ```
 
 - Check that Loki receives logs. The output must list your namespaces:
