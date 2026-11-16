@@ -8,11 +8,11 @@ The OpenTelemetry collector in each pod sends them to **Loki**. Loki stores them
 
 One Loki stores the logs of **all clusters in all namespaces**. You install it only once.
 
-![KeenPG logging architecture](images/logging-architecture.png)
+![KeenPG logging architecture](https://raw.githubusercontent.com/keenpg/keenPG-docs/main/docs/assets/logging-architecture.png)
 
 ## How it works
 
-![How logs flow](images/logging-flow.png)
+![How logs flow](https://raw.githubusercontent.com/keenpg/keenPG-docs/main/docs/assets/logging-flow.png)
 
 1. PostgreSQL, Patroni, pgBackRest and pgBouncer write their log files in the pod.
 2. The OpenTelemetry collector (a sidecar in the same pod) reads these files.
@@ -161,11 +161,11 @@ Go to http://localhost:3000 and log in (default `admin` / `admin`).
 
 Go to **Dashboards**. You will see the **PostgreSQL Logs** dashboard with the `logs` tag:
 
-![Dashboards list](images/grafana-dashboards-list.png)
+![Dashboards list](https://raw.githubusercontent.com/keenpg/keenPG-docs/main/docs/assets/grafana-dashboards-list.png)
 
 Open **PostgreSQL Logs**:
 
-![PostgreSQL Logs dashboard](images/grafana-logs-dashboard.png)
+![PostgreSQL Logs dashboard](https://raw.githubusercontent.com/keenpg/keenPG-docs/main/docs/assets/grafana-logs-dashboard.png)
 
 The dashboard has:
 
@@ -185,11 +185,11 @@ Use the filters at the top to choose a **Namespace**, **Pod** and **Level**, or 
 
 Click a log line to see all its details: namespace, pod, container, level and the original log line:
 
-![Details of a log line](images/grafana-log-details.png)
+![Details of a log line](https://raw.githubusercontent.com/keenpg/keenPG-docs/main/docs/assets/grafana-log-details.png)
 
 Scroll down to see the logs of each component in its own section:
 
-![Patroni, pgBackRest and pgBouncer logs](images/grafana-logs-by-source.png)
+![Patroni, pgBackRest and pgBouncer logs](https://raw.githubusercontent.com/keenpg/keenPG-docs/main/docs/assets/grafana-logs-by-source.png)
 
 You can also search the logs yourself in **Explore**. Choose the **LOKI** data source, switch to
 **Code** and run a query:
