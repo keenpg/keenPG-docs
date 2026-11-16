@@ -152,3 +152,32 @@ By default username and password of Grafana is admin/admin
 ```
 
 
+### Additional TOP Queries Dashboard:
+```bash
+
+# git clone https://github.com/keenpg/keenpg-operator.git -b v6.0
+# cd keenpg-operator/config/monitoring/addon-monitoring
+# kubectl apply -n keenpg-operator  -f keenpg-top-queries-configmap.yaml  ( Namespace should be the name of namespace where the keenpgcluster is running in my case it is default).
+
+```
+
+```yaml
+
+  instrumentation:
+    metrics:
+      customQueries:
+        add:
+          - name: top-queries
+            queries:
+              name: keenpg-top-queries
+              key: top-queries.yaml          # top-queries-pg16.yaml for PG <= 16
+            collectionInterval: 30s
+  config:
+    parameters:
+      track_io_timing: "on"                  # needed for the I/O wait panel
+
+```
+
+Now you can import the dashboard provided in addon-monitoring folder.
+
+
