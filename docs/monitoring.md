@@ -106,7 +106,7 @@ Any built-in/default metric can be removed, including per-db metrics.
 If all metrics for a given SQL query are removed, the SQL query will no longer be run.
 
 
-### How to install Prometheus and Grafana
+## How to install Prometheus and Grafana
 ```bash
 # git clone https://github.com/keenpg/keenpg-operator.git -b v6.0
 
@@ -152,7 +152,7 @@ By default username and password of Grafana is admin/admin
 ```
 
 
-### Additional TOP Queries Dashboard:
+## Additional TOP Queries Dashboard:
 ```bash
 
 # git clone https://github.com/keenpg/keenpg-operator.git -b v6.0
