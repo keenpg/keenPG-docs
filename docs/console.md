@@ -1,6 +1,6 @@
 # KeenPG Console
 
-The **KeenPG console** is a web page for running PostgreSQL on Kubernetes and OpenShift. From your browser you can create databases, connect applications, take backups and restore them, run SQL and watch the health of every database. You never need to write YAML or use the command line.
+The **KeenPG console** is a web page for running PostgreSQL on Kubernetes and OpenShift. From your browser you can create databases, connect applications, take backups and restore them, run SQL on the primary or on a replica, and watch every database on Grafana dashboards. You never need to write YAML.
 
 This page explains every part of the console in simple words, with screenshots.
 
@@ -10,13 +10,15 @@ This page explains every part of the console in simple words, with screenshots.
 
 - [How the console works](#how-the-console-works)
 - [Words you will see](#words-you-will-see)
-- [Install and open the console](#install-and-open-the-console)
+- [Install with Helm](#install-with-helm)
 - [Sign in](#sign-in)
+- [HTTPS and the certificate](#https-and-the-certificate)
 - [The screen layout](#the-screen-layout)
 - [Home](#home)
 - [Create a cluster](#create-a-cluster)
 - [Clusters list](#clusters-list)
 - [Inside a cluster](#inside-a-cluster)
+- [Monitoring and logging](#monitoring-and-logging)
 - [Connect your application](#connect-your-application)
 - [Backup and restore](#backup-and-restore)
 - [SQL Editor](#sql-editor)
@@ -26,6 +28,7 @@ This page explains every part of the console in simple words, with screenshots.
 - [Migration](#migration)
 - [Users and access](#users-and-access)
 - [Other pages](#other-pages)
+- [Upgrade the console](#upgrade-the-console)
 - [Common tasks](#common-tasks)
 - [Troubleshooting](#troubleshooting)
 - [Be careful](#be-careful)
@@ -35,7 +38,7 @@ This page explains every part of the console in simple words, with screenshots.
 ## How the console works
 
 ```text
-You (browser) ──► KeenPG console ──► Kubernetes ──► KeenPG operator ──► your PostgreSQL clusters
+You (browser) ──HTTPS──► KeenPG console ──► Kubernetes ──► KeenPG operator ──► your PostgreSQL clusters
 ```
 
 1. **You** fill a form or press a button in the console.
@@ -55,7 +58,7 @@ Why this matters:
 
 | Word | Meaning |
 |---|---|
-| **Project** | A group of databases. In Kubernetes this is a *namespace*, for example `apps` or `analytics`. |
+| **Project** | A group of databases. In Kubernetes this is a *namespace*, for example `apps` or `analytics`. **All projects** shows every project at once. |
 | **Cluster** | One PostgreSQL database service: one primary and its replicas. |
 | **Primary** (also *leader*) | The main server. All writes go here. |
 | **Replica** (also *standby*) | A live copy of the primary. It can serve reads and takes over if the primary fails. |
@@ -69,36 +72,76 @@ Why this matters:
 | **Point-in-time restore** | Restoring a database to an exact moment, for example "yesterday at 10:15". |
 | **PgBouncer** | A connection pooler. Many application connections share a few database connections. |
 | **Secret** | A safe place in Kubernetes for passwords, keys and certificates. |
+| **Collector** | A small helper container added to each database pod when **Monitoring** is on. It collects metrics and, with **Logging**, the logs. |
+| **Prometheus / Loki / Grafana** | Prometheus stores the metrics, Loki stores the logs, Grafana shows both as dashboards. |
 
 ---
 
-## Install and open the console
+## Install with Helm
 
 > **Skip this part** if KeenPG is already installed for you.
 
-1. **Get the installation files.**
-   ```bash
-   git clone -b keenpgo-ui-6.0 https://github.com/keenpg/keenpg-operator.git
-   cd keenpg-operator
-   ```
+The Helm chart installs the **operator** and the **console** (with the console's own small database).
+Run the commands from the folder that holds the chart (`keenpg-operator/`).
 
-2. **Add the image registry login.** The KeenPG images are private, so Kubernetes needs your login to download them. Use the robot account you got from KeenPG.
-   ```bash
-   podman login quay.io --authfile config/keenpg/pull-secret.json
-   cat config/keenpg/pull-secret.json      # must show "quay.io", not {}
-   ```
-   If you skip this, databases will not start and show **ImagePullBackOff**.
+**1. Registry login.** The KeenPG images are private. Give Helm the robot account you got from KeenPG:
 
-3. **Install everything with one command.** This installs the operator, the console, the console's own small database, and every Secret needed.
-   ```bash
-   kubectl apply --server-side -k config/keenpg
-   kubectl -n keenpg-operator get pods      # wait until every pod is Running
-   ```
+```bash
+podman login quay.io                       # your KeenPG robot account
+```
 
-4. **Open the console** at `http://<node IP>:30080`. On minikube:
-   ```bash
-   minikube service keenpgo-console -n keenpg-operator --url
-   ```
+**2. Install the operator and the console.**
+
+```bash
+helm install keenpg ./keenpg-operator -n keenpg-operator --create-namespace \
+  --set console.enabled=true \
+  --set console.service.type=NodePort \
+  --set console.service.nodePort=30080 \
+  --set operator.featureGates="OpenTelemetryMetrics=true" \
+  --set pullSecret.create=true \
+  --set-file pullSecret.dockerconfigjson=$HOME/.config/containers/auth.json
+```
+
+| Setting | Why |
+|---|---|
+| `console.enabled=true` | Installs the console and its database. |
+| `console.service.type=NodePort`, `nodePort=30080` | Opens the console on port 30080 of every node. Leave them out to reach it only inside the cluster (or through your Ingress, `console.ingress.*`). |
+| `operator.featureGates=OpenTelemetryMetrics=true` | Lets clusters use **Monitoring**. **Logging** is turned on by the console itself when someone first ticks it. |
+| `pullSecret.*` | The registry login, so Kubernetes can download the images. Without it, pods show **ImagePullBackOff**. |
+
+**3. Wait until everything runs.**
+
+```bash
+kubectl -n keenpg-operator get pods
+```
+
+```text
+NAME                                READY   STATUS    RESTARTS   AGE
+keenpgo-7b8d8dcc4f-tjnht            1/1     Running   0          2m
+keenpgo-console-6797b94dc-rdl5j     1/1     Running   0          2m
+keenpgo-console-db-0                1/1     Running   0          2m
+```
+
+**4. Open the console** at **`https://<node IP>:30080`**. On minikube:
+
+```bash
+echo "https://$(minikube ip):30080"
+```
+
+Without a NodePort, forward the port and open **https://localhost:8443**:
+
+```bash
+kubectl -n keenpg-operator port-forward svc/keenpgo-console 8443:443
+```
+
+The first time, the browser warns that the certificate is not trusted. That is expected: the console made its own certificate. See [HTTPS and the certificate](#https-and-the-certificate).
+
+**5. Optional: dashboards and logs.** Install these once if you want the **Observability › Dashboards** page and the **Monitoring** and **Logging** switches. They are not part of the Helm chart:
+
+```bash
+kubectl apply -k config/monitoring      # Prometheus, Grafana, Alertmanager
+kubectl apply -k config/logging         # Loki, only if you want logs
+```
 
 ---
 
@@ -108,11 +151,82 @@ Why this matters:
 
 1. Open the console address in your browser.
 2. Type your **username** and **password**, then click **Sign In**.
-3. **First sign-in after install:** username `admin`, password `admin`.
+
+**The first password.** Helm makes a random password for the user `admin` and keeps it in the Secret `keenpgo-console-admin`. Read it with:
+
+```bash
+kubectl -n keenpg-operator get secret keenpgo-console-admin -o jsonpath='{.data.username}' | base64 -d; echo
+kubectl -n keenpg-operator get secret keenpgo-console-admin -o jsonpath='{.data.password}' | base64 -d; echo
+```
+
+```text
+admin
+x7Rk2pQw9LmZ4vTnB8sD   (yours is different)
+```
+
+To choose the password yourself, add `--set console.admin.password='Choose-A-Password-1'` to `helm install`.
+
+> **The Secret is only read once**, when the console starts for the first time and there is no admin yet. After that, the password lives in the console's own database. If you change it in the console, the Secret no longer shows it.
 
 > **Change the admin password on day one.** Click your name (top right) → **Change password**.
 
 You stay signed in for 12 hours. To sign out, click your name → **Sign out**.
+
+**Forgot the admin password?** Remove the admin user from the console database and restart the console. It then creates `admin` again with the password from the Secret above. Other users, the audit log and settings are kept.
+
+```bash
+kubectl -n keenpg-operator exec keenpgo-console-db-0 -- sh -c "PGPASSWORD=\"\$POSTGRES_PASSWORD\" \$(ls -d /usr/pgsql-*/bin | tail -1)/psql -h /tmp -U keenpgo -d keenpgo -c \"DELETE FROM console_users WHERE username = 'admin';\""
+kubectl -n keenpg-operator rollout restart deploy/keenpgo-console
+```
+
+`DELETE 1` means it worked.
+
+**Other users** forgot their password? An admin resets it in **Settings → Users** (key icon).
+
+---
+
+## HTTPS and the certificate
+
+The console always uses **HTTPS**. It makes its own **self-signed certificate** the first time it starts, and keeps it in the Secret `keenpgo-console-tls`.
+
+- Nothing else is needed: no cert-manager and no extra job. It works the same with Helm, kubectl, Argo CD and OpenShift.
+- Every console pod and every restart uses the same certificate. It is valid for 2 years; the console makes a new one 30 days before it ends.
+- `http://` on the same port is sent on to `https://` by itself.
+
+**Stop the browser warning.** Save the certificate and trust it on your computer (it is its own authority):
+
+```bash
+kubectl -n keenpg-operator get secret keenpgo-console-tls -o jsonpath='{.data.tls\.crt}' | base64 -d > keenpg-console.crt
+```
+
+- **Windows:** double-click the file → **Install Certificate** → *Local Machine* → *Trusted Root Certification Authorities*.
+- **macOS:** open it in **Keychain Access** → *System* → set *Always Trust*.
+- **Linux (Chrome / Firefox):** browser settings → *Certificates* → *Authorities* → **Import**.
+
+**Your address in the certificate.** By default the certificate is for the console's service names and `localhost`. To add the IP or name people type in the browser, set `KEENPGO_TLS_HOSTS` and let the console make a new certificate:
+
+```bash
+kubectl -n keenpg-operator set env deploy/keenpgo-console KEENPGO_TLS_HOSTS=192.168.49.2,console.example.com
+kubectl -n keenpg-operator delete secret keenpgo-console-tls
+kubectl -n keenpg-operator rollout restart deploy/keenpgo-console
+```
+
+**Your own certificate** (from your company's authority or cert-manager): put it in the same Secret. The console uses it as it is, never replaces it, and picks up a renewed one within 5 minutes:
+
+```bash
+kubectl -n keenpg-operator create secret tls keenpgo-console-tls --cert=console.crt --key=console.key \
+  --dry-run=client -o yaml | kubectl apply -f -
+kubectl -n keenpg-operator rollout restart deploy/keenpgo-console
+```
+
+**OpenShift:** create a passthrough Route, so the browser talks HTTPS straight to the console:
+
+```bash
+oc -n keenpg-operator create route passthrough keenpgo-console --service=keenpgo-console --port=https
+oc -n keenpg-operator get route keenpgo-console
+```
+
+**An Ingress or load balancer that already does HTTPS:** it can send plain HTTP to the console with the header `X-Forwarded-Proto: https`; the console accepts that. Or turn the console's own HTTPS off with `KEENPGO_TLS=off`.
 
 ---
 
@@ -122,10 +236,14 @@ Every page has the same frame:
 
 | Area | What it does |
 |---|---|
-| **Left menu** | Opens each page. On small screens it shows only icons; click **»** at the bottom to open it. |
-| **Project** (top left) | Chooses the project you are working in. Most pages show only that project's clusters. |
+| **Left menu** | Opens each page. On small screens it shows only icons; click **»** at the bottom to open it. Pages with an arrow (**Observability**) open a list of sub-pages. |
+| **Project** (top left) | Chooses the project you are working in. **All projects** (the default) shows the clusters of every project you can see. |
 | **Create cluster** (top right) | Starts a new database from any page. |
 | **Your name** (top right) | Change your password, manage users (admins only), sign out. |
+
+![Project list with All projects](assets/console-all-projects.png)
+
+Like **All namespaces** in OpenShift, **All projects** is first in the list. Pick a project to see only its clusters. The lists of clusters, the SQL editor and Backup & Restore follow the project you pick.
 
 You see only the pages and buttons your role allows. See [Users and access](#users-and-access).
 
@@ -220,14 +338,25 @@ Click **Create cluster** (top right). The form has 9 numbered steps. While you f
 | Step | What to set |
 |---|---|
 | **5. Connection pooling** | Turn on **pgBouncer** if your application opens many connections. |
-| **6. Network, security, monitoring** | **ClusterIP** = reachable only inside Kubernetes. **NodePort / LoadBalancer** = reachable from outside. Also: metrics sidecar, extra image pull secrets, your own TLS certificate. |
+| **6. Network, security, monitoring** | **ClusterIP** = reachable only inside Kubernetes. **NodePort / LoadBalancer** = reachable from outside. **Monitoring** and **Logging** (below). Extra image pull secrets, your own TLS certificate. |
 | **7. Users and databases** | Each user gets a database and a generated password. Keep **Also create the postgres superuser Secret** on to use the SQL editor with full rights. |
 | **8. PostgreSQL parameters** | Settings such as `max_connections`. Leave the defaults if you aren't sure. |
 | **9. Initial data** | Start empty, or start from another cluster's backup, optionally at a point in time. |
 
+**Monitoring and logging (step 6)**
+
+![Create cluster: Monitoring and Logging](assets/console-create-monitoring-logging.png)
+
+Both are **off** unless you tick them:
+
+- **Monitoring** adds the collector to each pod. Metrics and slow queries go to Prometheus and show on the Grafana dashboards. It works for every PostgreSQL version. It is greyed out until monitoring is installed (`kubectl apply -k config/monitoring`).
+- **Logging** also sends the logs of PostgreSQL, Patroni, pgBackRest and pgBouncer to Loki. It needs **Monitoring**. It is greyed out until Loki is installed (`kubectl apply -k config/logging`).
+
+You can change both later. See [Monitoring and logging](#monitoring-and-logging).
+
 **Finish:** check the **Summary**, optionally click **View YAML** to see the exact definition, then click **Create cluster**.
 
-The new cluster shows **deploying** and is usually ready in 2 to 5 minutes. The first time can take longer, because the images are downloaded.
+The new cluster, and a new project, show up straight away; there is no need to reload the page. It shows **deploying** and is usually ready in 2 to 5 minutes. The first time can take longer, because the images are downloaded.
 
 > **No passwords to prepare.** The Summary shows **Required secrets: None needed**. The operator creates every password and certificate by itself.
 
@@ -235,7 +364,7 @@ The new cluster shows **deploying** and is usually ready in 2 to 5 minutes. The 
 
 ## Clusters list
 
-Click **Clusters** in the menu to see every cluster in the current project.
+Click **Clusters** in the menu to see every cluster of the project you picked, or of all projects.
 
 ![Clusters list](assets/console-clusters.png)
 
@@ -246,9 +375,10 @@ Click **Clusters** in the menu to see every cluster in the current project.
 | **Environment** | The label you chose (development, production…). |
 | **Instances** | Ready pods / total pods, for example `3/3`. |
 | **PostgreSQL** | Major version. |
-| **Features** | Backups, PgBouncer and so on. |
+| **Namespace** | The project of the cluster. Useful with **All projects**. |
+| **Features** | Backups, PgBouncer, **monitoring**, **logging** and so on. |
 
-The list refreshes every 10 seconds. Use the icons above the table to search, filter or choose columns.
+The list refreshes every 10 seconds, and every 5 seconds while a cluster is being created. Use the icons above the table to search, filter or choose columns.
 
 ---
 
@@ -262,7 +392,7 @@ Open a cluster to see everything about it. The header shows its health, environm
 
 | Tab | What it shows and what you can do |
 |---|---|
-| **Overview** | Every member with its **role** (leader, sync_standby, replica), **state** and **lag**, plus the Patroni console (below). |
+| **Overview** | Every member with its **role** (leader, sync_standby, replica), **state** and **lag**, the Patroni console (below), services, instance sets and the **Features** card. |
 | **Backup & Restore** | Backup schedules, the list of backups, and the backup jobs. See [Backup and restore](#backup-and-restore). |
 | **Users & databases** | Users the operator manages, with **Connection**, **Edit**, **Add user** and remove. |
 | **Configuration** | PostgreSQL parameters and extra `pg_hba` access rules. Click **Save** to apply. |
@@ -311,6 +441,29 @@ Click **Actions** (top right of the cluster page).
 
 ---
 
+## Monitoring and logging
+
+Turn them on or off for a running cluster on its **Overview** tab, in the **Features** card:
+
+![Monitoring and Logging switches](assets/console-cluster-features.png)
+
+The console asks first and tells you what will happen:
+
+![Turn on logging](assets/console-logging-confirm.png)
+
+| Change | What happens |
+|---|---|
+| **Monitoring on** | The collector is added to every pod, with `pg_stat_statements` for slow queries. **The PostgreSQL pods restart one by one, replicas first.** |
+| **Monitoring off** | The collector is removed, and Logging goes off too. The pods restart one by one. |
+| **Logging on** | Logs go to Loki. No restart is needed, except the very first time: the operator restarts once to turn on log collection, and each monitored cluster then needs one **Rolling restart** (cluster → **Actions**) before PostgreSQL writes its own log lines. |
+| **Logging off** | Logs are no longer sent. Logs already in Loki stay until they expire (7 days). |
+
+> **Using Helm with logging?** The console turns on the operator's `OpenTelemetryLogs` setting the first time someone ticks Logging. A later `helm upgrade` sets it back to what `values.yaml` says. Once you use logging, put both in your values: `operator.featureGates: "OpenTelemetryMetrics=true,OpenTelemetryLogs=true"`. If you forget, **Observability › Dashboards** shows a warning with a **Turn on again** button.
+
+Clusters made with the old **metrics exporter** still work. To move them to the collector, turn Monitoring off and on.
+
+---
+
 ## Connect your application
 
 Open the cluster → **Users & databases** → **Connection** next to the user.
@@ -329,6 +482,8 @@ The window shows everything an application needs. Click the copy icon next to an
 | **pgBouncer host** | `hippo-pgbouncer.apps.svc` | Use this instead of the host when PgBouncer is on. |
 
 **From an application inside Kubernetes**, use the URI as shown. You can also read it from the Secret `<cluster>-pguser-<user>`, which has the keys `host`, `port`, `user`, `password`, `dbname`, `uri` and `jdbc-uri`.
+
+**For read-only traffic** (reports, dashboards), use the replicas: `<cluster>-replicas.<project>.svc`, same port, user and password.
 
 **From your laptop**, forward the port first:
 ```bash
@@ -374,14 +529,26 @@ Use a clone to:
 
 ## SQL Editor
 
-Run SQL on any database straight from your browser.
+Run SQL on any database straight from your browser, on the **primary** or on a **replica**.
 
-![SQL editor](assets/console-sql-editor.png)
+![SQL editor on a replica](assets/console-sql-replica.png)
 
-1. Choose the **Cluster** and the **Database** at the top.
+1. Choose the **Cluster**, the **Server** and the **Database** at the top.
 2. Type your SQL. The left panel lists schemas, tables and views; click one to use its name.
 3. Click **Run**, or press **F5** or **Ctrl+Enter**. To run only part of the text, select it first.
 4. Results appear in **Data output**. Click **CSV** (bottom right) to download them.
+
+**Choose the server**
+
+![Server list](assets/console-sql-server.png)
+
+| Server | Use it for |
+|---|---|
+| **Primary (read-write)** | The default. Everything, including changes. |
+| **Any replica (read-only)** | Reports and heavy reads, to keep load off the primary. The replicas share the work. |
+| **One instance**, for example `hippo-instance1-wxyz-0 (replica, read-only)` | Checking one exact server, for example whether a replica has the latest data. |
+
+On a replica an orange **read-only** label shows. Replicas are live copies, so queries that change data are refused there. The chip under the cluster tells you which server answered (**leader** or **standby** and its address).
 
 More:
 
@@ -389,7 +556,8 @@ More:
 - **Messages** shows notices and errors. **Query history** shows what you ran before.
 - **+** opens another query tab. **Max rows** limits how many rows come back.
 - The badge at the top right shows your access, for example **Admin · scoped**. Read-only users can only run queries that don't change data.
-- **Every query is recorded in the audit log.**
+- With **All projects**, the cluster list shows each cluster's project next to its name.
+- **Every query that can change data is recorded in the audit log.**
 
 ---
 
@@ -416,29 +584,41 @@ The cards show the number of databases, total size, roles, open sessions, and wh
 
 ## Observability
 
-One page for the health of **all** your databases at once.
+**Observability** in the left menu opens two pages: **Dashboards** and **Kubernetes**.
 
-![Observability](assets/console-observability.png)
+### Dashboards
 
-- **Top cards:**
-  - how many clusters are healthy;
-  - transactions per second across all clusters;
-  - total connections;
-  - the worst replication lag anywhere.
-- **Cluster cards:**
-  - each shows its state (**Healthy**, **Warning**, **Unknown**), connections and lag;
-  - the coloured dots are its members;
-  - click a card to see its details below.
-- **Warnings** explain what needs attention, for example:
-  - "member … needs a restart to apply settings";
-  - "1 session is waiting on a lock".
-- **Detail cards:** transactions, rows written, WAL, connections, cache hit rate, data size and uptime.
-- **Patroni table:**
-  - who leads and who follows;
-  - each member's lag and restarts;
-  - when each member last checked in.
+The Grafana dashboards of every cluster, **inside the console**. You don't sign in to Grafana separately: the console signs you in. Console admins are Grafana admins; everyone else can look but not change dashboards.
 
-The **Kubernetes** tab shows the health of nodes and system pods.
+![Dashboards](assets/console-dashboards.png)
+
+1. Open **Observability › Dashboards**. Type in **Search dashboards** to find one.
+2. Click a dashboard. It opens on the same page, with Grafana's own time range and filters.
+3. **All dashboards** goes back to the list; **Open in a new tab** opens it on its own.
+
+| Dashboard | What it shows |
+|---|---|
+| **PostgreSQL Overview** | All clusters at a glance. |
+| **PostgreSQL Details** | One cluster in depth: connections, transactions, cache, locks, replication. |
+| **PostgreSQL Service Health** | Saturation, errors and availability. |
+| **Query Statistics** | The slowest and busiest queries (`pg_stat_statements`). |
+| **pgBackRest** | Backups and WAL archiving. |
+| **PGBouncer** | Pools, client and server connections. |
+| **Pod Details** | CPU, memory, disk and network of each pod. |
+| **Prometheus Alerts** | Alerts that are firing. |
+| **PostgreSQL Logs** | The logs, coloured by level (with Logging on). |
+
+The dashboards need monitoring installed (`kubectl apply -k config/monitoring`) and **Monitoring** on for the clusters you want to see. Users limited to some projects can't open this page, because the dashboards show every cluster.
+
+**Grafana on its own:** it lives under `/grafana/`:
+
+```bash
+kubectl -n keenpg-operator port-forward svc/keenpg-grafana 3000:3000     # then http://localhost:3000/grafana/
+```
+
+### Kubernetes
+
+The health of the Kubernetes nodes and system pods under your databases.
 
 ---
 
@@ -487,7 +667,7 @@ The new cluster has the same PostgreSQL major version as the source.
 
 | Group | Can do |
 |---|---|
-| **Admin** | Everything: users, access policies, settings, audit log, SQL as superuser. |
+| **Admin** | Everything: users, access policies, settings, audit log, SQL as superuser, Grafana admin. |
 | **Operator** | Create and run clusters, Patroni actions, backups, Secrets, Kubernetes pages, discovery and migration, SQL read/write. |
 | **DBA** | Only the database clusters, the SQL editor (as superuser) and the database manager. No Kubernetes pages, Secrets or settings. |
 | **Viewer** | Read only. |
@@ -506,7 +686,22 @@ The **Access policies** tab holds rules for groups, teams or single users, optio
 | **Settings → Operator** | The operator's state and the image used for each PostgreSQL version and tool. |
 | **Settings → Kubernetes** | Storage classes (disk types, and whether they can grow) and the nodes. |
 | **Settings → Console storage** | The console's own small database (users, sessions, audit log) and its disk. Click **Increase size** if it fills up. |
-| **Settings → Audit log** | Every change and every SQL query made in the console: when, who, what. Kept for 180 days by default. |
+| **Settings → Audit log** | Every change and every SQL query that changes data: when, who, what. Kept for 180 days by default. |
+
+---
+
+## Upgrade the console
+
+```bash
+helm upgrade keenpg ./keenpg-operator -n keenpg-operator --reuse-values
+kubectl -n keenpg-operator rollout status deploy/keenpgo-console
+```
+
+Then reload the browser with **Ctrl+Shift+R**, so it doesn't keep the old page.
+
+- Your users, settings, audit log, the admin password and the HTTPS certificate are kept.
+- If the image keeps the same tag (for example `v6.0`), make Kubernetes download it again: set the console's image pull policy to `Always` in your values, or run `kubectl -n keenpg-operator rollout restart deploy/keenpgo-console`.
+- Using logging? Make sure `operator.featureGates` still says `OpenTelemetryMetrics=true,OpenTelemetryLogs=true`.
 
 ---
 
@@ -514,16 +709,22 @@ The **Access policies** tab holds rules for groups, teams or single users, optio
 
 | I want to… | Do this |
 |---|---|
+| Get the admin password | `kubectl -n keenpg-operator get secret keenpgo-console-admin -o jsonpath='{.data.password}' \| base64 -d` |
+| See the clusters of every project | **Project** (top left) → **All projects**. |
 | Create a database for a new app | **Create cluster** → fill steps 1–7 → **Create cluster**. |
 | Get my app's connection details | Cluster → **Users & databases** → **Connection**. |
+| Run a report without loading the primary | **SQL Editor** → **Server** → **Any replica (read-only)**. |
 | Back up before a risky change | Cluster → **Actions** → **Back up now (full)**. |
 | Recover data deleted by mistake | **Backup & Restore** → **Clone to new cluster** → a time just before the mistake → copy the data back. |
 | Add a replica | Cluster → **YAML** → raise `replicas` under `instances` → **Save**. |
 | Change a PostgreSQL setting | Cluster → **Configuration** → change → **Save**. |
 | Move the primary before maintenance | Cluster → **Actions** → **Switchover**. |
 | Pause a test database to save resources | Cluster → **Actions** → **Stop cluster** (data is kept). |
+| Turn on metrics or logs for a cluster | Cluster → **Overview** → **Features** → **Monitoring** / **Logging**. |
+| See the dashboards | **Observability** → **Dashboards** → click a dashboard. |
+| Find slow queries | **Observability** → **Dashboards** → **Query Statistics**, or cluster → **Metrics**. |
+| Read a cluster's logs | **Observability** → **Dashboards** → **PostgreSQL Logs** (Logging on). |
 | Find out why a cluster isn't healthy | Cluster → **Events**, then **Pods & logs**. |
-| Find slow queries | Cluster → **Metrics** → longest-running queries, or **Databases** → **Sessions**. |
 | Give a colleague read-only access | **Settings → Users** → **Add user** → group **Viewer**. |
 | See who changed something | **Settings → Audit log**. |
 
@@ -533,14 +734,22 @@ The **Access policies** tab holds rules for groups, teams or single users, optio
 
 | What you see | What it means | What to do |
 |---|---|---|
-| Pods show **ImagePullBackOff** or **401 Unauthorized** | Kubernetes can't download the images. | The registry login is missing or wrong. Repeat install step 2, run `kubectl apply --server-side -k config/keenpg` again, then delete the stuck pods. |
+| Pods show **ImagePullBackOff** or **401 Unauthorized** | Kubernetes can't download the images. | The registry login is missing or wrong. Run `helm upgrade` with `pullSecret.create=true` and your `auth.json`, then delete the stuck pods. |
 | **manifest unknown** / **not found** | That image version doesn't exist in the registry. | Contact KeenPG support. |
+| The browser says **"Your connection is not private"** | The console's certificate is self-signed. | Expected. Click **Advanced → Continue**, or trust the certificate (see [HTTPS](#https-and-the-certificate)). |
+| **"Wrong username or password"** for `admin` | The password is not `admin`: Helm made a random one. | Read it from the Secret `keenpgo-console-admin` (see [Sign in](#sign-in)). Still wrong? Reset the admin as shown there. |
+| Console log: **password authentication failed for user "keenpgo"** | The Secret `keenpgo-console-db` no longer matches the console database (for example it was deleted and made again). | Put the old password back into the Secret, or give the database the new one. Ask KeenPG support for the exact commands for your case. |
 | A pod stays **Pending**, or a **PersistentVolumeError** event | No disk could be created. | Check **Settings → Kubernetes** for a storage class with free space. |
 | A **MissingRequiredImage** event | No image is set for that PostgreSQL version. | Choose a version offered in the Create cluster form. |
 | The cluster stays **deploying** | Something is blocking the start. | Read the cluster's **Events** tab, then **Pods & logs**. |
 | A replica's lag keeps growing | The replica is falling behind or stuck. | Overview → Patroni console → choose the member → **reinit**. |
+| **Monitoring** or **Logging** is greyed out | Prometheus or Loki is not installed. | `kubectl apply -k config/monitoring` (and `config/logging` for logs). |
+| **Dashboards:** "The dashboards are not available" | Grafana is not installed or not reachable. | `kubectl apply -k config/monitoring`. If Grafana runs elsewhere, set `KEENPGO_GRAFANA_URL` on the console. |
+| **Dashboards:** a panel says **origin not allowed** | A proxy in front of the console changes the address. | `kubectl -n keenpg-operator set env deploy/keenpg-grafana GF_SECURITY_CSRF_TRUSTED_ORIGINS=<your console address>` |
+| **Dashboards:** "the operator has log collection turned off" | A `helm upgrade` removed the logging setting. | Click **Turn on again**, and add `OpenTelemetryLogs=true` to `operator.featureGates` in your values. |
+| Logging is on, but no **PostgreSQL** log lines (Patroni lines arrive) | PostgreSQL has not restarted since log collection was turned on. | Cluster → **Actions** → **Rolling restart**. |
+| SQL editor: **"cannot execute … in a read-only transaction"** | You ran a change on a replica. | Pick **Primary (read-write)** in **Server**. |
 | "No console database is configured" | The console's own database isn't running. | Check the pod `keenpgo-console-db-0` in the `keenpg-operator` project. |
-| You can't sign in | Wrong or forgotten password. | Ask an admin to reset it in **Settings → Users** (key icon). |
 
 Still stuck? Send this output to KeenPG support:
 
@@ -548,6 +757,7 @@ Still stuck? Send this output to KeenPG support:
 kubectl -n <project> get keenpgcluster <cluster> -o yaml
 kubectl -n <project> get pods,pvc,events
 kubectl -n keenpg-operator logs deploy/keenpgo --tail=200
+kubectl -n keenpg-operator logs deploy/keenpgo-console --tail=200
 ```
 
 ---
@@ -558,5 +768,7 @@ kubectl -n keenpg-operator logs deploy/keenpgo --tail=200
 - **Restore in place replaces all data.** When in doubt, use **Clone to new cluster**.
 - **Use 2 or more pods for production.** With one pod there is no automatic failover.
 - **Keep backups on.** Without them you can't restore or clone.
-- **Change the default admin password** on the first day.
+- **Change the admin password** on the first day, and never share it in chats or tickets.
+- **Turning Monitoring on or off restarts the PostgreSQL pods** one by one. Do it in a quiet hour for busy production databases.
 - **Suspend reconciliation only for short maintenance.** While suspended, the operator doesn't repair the cluster.
+- **Don't delete the Secrets `keenpgo-console-db` or `keenpgo-console-admin`.** The console database keeps its first password; a new Secret won't match it.
