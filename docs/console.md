@@ -81,35 +81,13 @@ Why this matters:
 
 > **Skip this part** if KeenPG is already installed for you.
 
-The Helm chart installs the **operator** and the **console** (with the console's own small database).
-Run the commands from the folder that holds the chart (`keenpg-operator/`).
-
-**1. Registry login.** The KeenPG images are private. Give Helm the robot account you got from KeenPG:
+Run this from the folder that holds the chart. It installs everything: the operator, the console and the console's own database.
 
 ```bash
-podman login quay.io                       # your KeenPG robot account
+helm install keenpg ./keenpg-operator -n keenpg-operator --create-namespace
 ```
 
-**2. Install the operator and the console.**
-
-```bash
-helm install keenpg ./keenpg-operator -n keenpg-operator --create-namespace \
-  --set console.enabled=true \
-  --set console.service.type=NodePort \
-  --set console.service.nodePort=30080 \
-  --set operator.featureGates="OpenTelemetryMetrics=true" \
-  --set pullSecret.create=true \
-  --set-file pullSecret.dockerconfigjson=$HOME/.config/containers/auth.json
-```
-
-| Setting | Why |
-|---|---|
-| `console.enabled=true` | Installs the console and its database. |
-| `console.service.type=NodePort`, `nodePort=30080` | Opens the console on port 30080 of every node. Leave them out to reach it only inside the cluster (or through your Ingress, `console.ingress.*`). |
-| `operator.featureGates=OpenTelemetryMetrics=true` | Lets clusters use **Monitoring**. **Logging** is turned on by the console itself when someone first ticks it. |
-| `pullSecret.*` | The registry login, so Kubernetes can download the images. Without it, pods show **ImagePullBackOff**. |
-
-**3. Wait until everything runs.**
+Wait until all pods are **Running**:
 
 ```bash
 kubectl -n keenpg-operator get pods
@@ -122,21 +100,27 @@ keenpgo-console-6797b94dc-rdl5j     1/1     Running   0          2m
 keenpgo-console-db-0                1/1     Running   0          2m
 ```
 
-**4. Open the console** at **`https://<node IP>:30080`**. On minikube:
+### Open the console
+
+The console service is only reachable inside Kubernetes. To open it from your browser, change the service to **NodePort**:
 
 ```bash
-echo "https://$(minikube ip):30080"
+kubectl -n keenpg-operator patch svc keenpgo-console -p '{"spec":{"type":"NodePort"}}'
+kubectl -n keenpg-operator get svc keenpgo-console
 ```
 
-Without a NodePort, forward the port and open **https://localhost:8443**:
-
-```bash
-kubectl -n keenpg-operator port-forward svc/keenpgo-console 8443:443
+```text
+NAME              TYPE       CLUSTER-IP     EXTERNAL-IP   PORT(S)                      AGE
+keenpgo-console   NodePort   10.96.120.15   <none>        80:31847/TCP,443:30512/TCP   5m
 ```
 
-The first time, the browser warns that the certificate is not trusted. That is expected: the console made its own certificate. See [HTTPS and the certificate](#https-and-the-certificate).
+Open **`https://<node IP>:<node port>`**, for example `https://192.168.49.2:30512`. (On minikube, `minikube ip` gives the node IP.)
 
-**5. Optional: dashboards and logs.** Install these once if you want the **Observability › Dashboards** page and the **Monitoring** and **Logging** switches. They are not part of the Helm chart:
+The first time, the browser warns that the certificate is not trusted. That is expected: the console made its own certificate. Click **Advanced → Continue**, or see [HTTPS and the certificate](#https-and-the-certificate).
+
+### Optional: dashboards and logs
+
+Install these once if you want the **Observability › Dashboards** page and the **Monitoring** and **Logging** switches:
 
 ```bash
 kubectl apply -k config/monitoring      # Prometheus, Grafana, Alertmanager
